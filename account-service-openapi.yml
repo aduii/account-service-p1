@@ -1,0 +1,215 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v1.0.0
+servers:
+  - url: http://localhost:63925
+    description: Localhost server
+paths:
+  /api/v1/account/{id}:
+    get:
+      tags:
+        - account-controller
+      operationId: findByAccountId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Account'
+    put:
+      tags:
+        - account-controller
+      operationId: updateAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Account'
+    delete:
+      tags:
+        - account-controller
+      operationId: deleteAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/v1/account-movement/{id}:
+    get:
+      tags:
+        - account-movement-controller
+      operationId: findByAccountMovementId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AccountMovement'
+    put:
+      tags:
+        - account-movement-controller
+      operationId: updateAccountMovement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountMovement'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AccountMovement'
+    delete:
+      tags:
+        - account-movement-controller
+      operationId: deleteAccountMovement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/v1/account:
+    get:
+      tags:
+        - account-controller
+      operationId: getAllAccounts
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+    post:
+      tags:
+        - account-controller
+      operationId: createAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Account'
+  /api/v1/account-movement:
+    get:
+      tags:
+        - account-movement-controller
+      operationId: getAllAccountMovements
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountMovement'
+    post:
+      tags:
+        - account-movement-controller
+      operationId: createAccountMovement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountMovement'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AccountMovement'
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        accountNumber:
+          type: string
+        accountType:
+          type: string
+        balance:
+          type: number
+          format: double
+        clientId:
+          type: string
+        movementLimit:
+          type: number
+          format: double
+        commission:
+          type: number
+          format: double
+    AccountMovement:
+      type: object
+      properties:
+        id:
+          type: string
+        accountId:
+          type: string
+        amount:
+          type: number
+          format: double
+        type:
+          type: string
+        date:
+          type: string
+          format: date-time
