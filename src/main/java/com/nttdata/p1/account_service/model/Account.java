@@ -12,7 +12,7 @@ public class Account {
     private String accountNumber;
     private String accountType; // Ahorro, Corriente, Plazo Fijo
     private Double balance;
-    private String clientId; // Cliente asociado
+    private String customerId; // Cliente asociado
     private Double movementLimit;
     private Double commission;
 }
