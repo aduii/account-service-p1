@@ -8,6 +8,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+
+import static com.nttdata.p1.account_service.utils.parameters.*;
+
 @Repository
 public class AccountRepositoryImpl implements AccountRepository {
     @Autowired
@@ -18,41 +25,34 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Mono<Account> createAccount(Account account) {
+        Map<String, Function<Customer, Mono<Account>>> customerValidators = Map.of(
+                "personal", customer -> validatePersonalCustomer(account, customer),
+                "empresarial", customer -> validateBusinessCustomer(account, customer)
+        );
+
         return webClient.get()
                 .uri("/{id}", account.getCustomerId())
                 .retrieve()
                 .bodyToMono(Customer.class)
-                .flatMap(customer -> {
-                    // Validar restricciones según el tipo de cliente
-                    if (customer.getType().equalsIgnoreCase("personal")) {
-                        return validatePersonalCustomer(account, customer);
-                    } else if (customer.getType().equalsIgnoreCase("empresarial")) {
-                        return validateBusinessCustomer(account, customer);
-                    } else {
-                        return Mono.error(new RuntimeException("Tipo de cliente desconocido"));
-                    }
-                })
-                .flatMap(validatedAccount -> {
-                    // Guardar la cuenta si pasa la validación
-//                    validatedAccount.setCreatedAt(LocalDateTime.now());
-                    return accountCrudRepository.save(validatedAccount);
-                });
+                .flatMap(customer ->
+                        Optional.ofNullable(customerValidators.get(customer.getType().toLowerCase()))
+                                .map(validator -> validator.apply(customer))
+                                .orElseGet(() -> Mono.error(new RuntimeException(CustomerValidatorGlobalError)))
+                )
+                .flatMap(validatedAccount -> accountCrudRepository.save(validatedAccount));
     }
 
     private Mono<Account> validatePersonalCustomer(Account account, Customer customer) {
         return accountCrudRepository.findByCustomerIdAndAccountType(customer.getId(), account.getAccountType())
-                .flatMap(existingAccount -> {
-                    if (existingAccount != null) {
-                        return Mono.error(new RuntimeException("El cliente ya tiene una cuenta de este tipo"));
-                    }
-                    return Mono.just(account);
-                })
-                .switchIfEmpty(Mono.just(account));
+                .filter(Objects::isNull) // Solo permite si no existe una cuenta previa
+                .switchIfEmpty(Mono.error(new RuntimeException(PersonalCustomerValidatorError)))
+                .then(Mono.just(account));
     }
 
+
     private Mono<Account> validateBusinessCustomer(Account account, Customer customer) {
-        if (!account.getAccountType().equalsIgnoreCase("current")) {
-            return Mono.error(new RuntimeException("Los clientes empresariales solo pueden tener cuentas corrientes"));
+        if (!account.getAccountType().equalsIgnoreCase("corriente")) {
+            return Mono.error(new RuntimeException(BusinessCustomerValidatorError));
         }
         return Mono.just(account); // Sin límite para cuentas corrientes
     }
